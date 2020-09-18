@@ -56,7 +56,9 @@ public class DispatchedMonitorTest {
     MockitoAnnotations.initMocks(this);
     when(requeuer.apply(any(QueueEntry.class)))
         .thenReturn(immediateFailedFuture(new RuntimeException("unexpected requeue")));
-    dispatchedMonitor = new DispatchedMonitor(backplane, requeuer, /* intervalSeconds=*/ 0);
+    dispatchedMonitor =
+        new DispatchedMonitor(
+            backplane, requeuer, /* intervalSeconds=*/ 0, /* timeoutSeconds=*/ 3600);
   }
 
   @Test

@@ -375,6 +375,8 @@ message ShardInstanceConfig {
   // a maximum threshold for an action's specified timeout,
   // beyond which an action will be rejected for execution
   google.protobuf.Duration maximum_action_timeout = 7;
+
+  int32 dispatched_monitor_timeout_seconds = 8;
 }
 
 message ShardWorkerInstanceConfig {

@@ -26,7 +26,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,15 +40,19 @@ class DispatchedMonitor implements Runnable {
 
   private final ShardBackplane backplane;
   private final Function<QueueEntry, ListenableFuture<Void>> requeuer;
-  private final int intervalSeconds;
+  private final int intervalSeconds, timeoutSeconds;
+  private final ExecutorService executorService;
 
   DispatchedMonitor(
       ShardBackplane backplane,
       Function<QueueEntry, ListenableFuture<Void>> requeuer,
-      int intervalSeconds) {
+      int intervalSeconds,
+      int timeoutSeconds) {
     this.backplane = backplane;
     this.requeuer = requeuer;
     this.intervalSeconds = intervalSeconds;
+    this.timeoutSeconds = timeoutSeconds > 0 ? timeoutSeconds : 3600;
+    this.executorService = Executors.newSingleThreadExecutor();
   }
 
   private ListenableFuture<Void> requeueDispatchedOperation(DispatchedOperation o, long now) {
@@ -115,10 +123,21 @@ class DispatchedMonitor implements Runnable {
     getOnlyInterruptibly(submitAll());
   }
 
-  private void runInterruptibly() throws InterruptedException {
+  private void runInterruptiblyWithTimeout()
+      throws InterruptedException, TimeoutException, ExecutionException {
     while (!backplane.isStopped()) {
       TimeUnit.SECONDS.sleep(intervalSeconds);
-      iterate();
+      final Future<Object> f =
+          (Future<Object>)
+              executorService.submit(
+                  () -> {
+                    try {
+                      iterate();
+                    } catch (InterruptedException e) {
+                      Thread.currentThread().interrupt();
+                    }
+                  });
+      f.get(timeoutSeconds, TimeUnit.SECONDS);
     }
   }
 
@@ -126,9 +145,13 @@ class DispatchedMonitor implements Runnable {
   public synchronized void run() {
     logger.log(Level.INFO, "DispatchedMonitor: Running");
     try {
-      runInterruptibly();
+      runInterruptiblyWithTimeout();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+    } catch (final TimeoutException e) {
+      logger.log(Level.SEVERE, "Dispatched monitor iteration exceeded timeout.");
+    } catch (final ExecutionException e) {
+      throw new RuntimeException();
     } finally {
       logger.log(Level.INFO, "DispatchedMonitor: Exiting");
     }

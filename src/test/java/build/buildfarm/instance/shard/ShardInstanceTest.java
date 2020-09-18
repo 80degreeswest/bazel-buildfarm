@@ -132,6 +132,7 @@ public class ShardInstanceTest {
             mockBackplane,
             /* runDispatchedMonitor=*/ false,
             /* dispatchedMonitorIntervalSeconds=*/ 0,
+            /* dispatchedMonitorTimeoutSeconds=*/ 3600,
             /* runOperationQueuer=*/ false,
             /* maxBlobSize=*/ 0,
             /* maxActionTimeout=*/ Duration.getDefaultInstance(),

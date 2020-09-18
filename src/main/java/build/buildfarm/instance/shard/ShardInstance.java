@@ -200,6 +200,7 @@ public class ShardInstance extends AbstractServerInstance {
         createBackplane(config, identifier),
         config.getRunDispatchedMonitor(),
         config.getDispatchedMonitorIntervalSeconds(),
+        config.getDispatchedMonitorTimeoutSeconds(),
         config.getRunOperationQueuer(),
         config.getMaxBlobSize(),
         config.getMaximumActionTimeout(),
@@ -249,6 +250,7 @@ public class ShardInstance extends AbstractServerInstance {
       ShardBackplane backplane,
       boolean runDispatchedMonitor,
       int dispatchedMonitorIntervalSeconds,
+      int dispatchedMonitorTimeoutSeconds,
       boolean runOperationQueuer,
       long maxBlobSize,
       Duration maxActionTimeout,
@@ -272,7 +274,10 @@ public class ShardInstance extends AbstractServerInstance {
       dispatchedMonitor =
           new Thread(
               new DispatchedMonitor(
-                  backplane, this::requeueOperation, dispatchedMonitorIntervalSeconds));
+                  backplane,
+                  this::requeueOperation,
+                  dispatchedMonitorIntervalSeconds,
+                  dispatchedMonitorTimeoutSeconds));
     } else {
       dispatchedMonitor = null;
     }
