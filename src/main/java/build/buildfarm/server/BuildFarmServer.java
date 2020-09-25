@@ -25,8 +25,11 @@ import build.buildfarm.metrics.MetricsPublisher;
 import build.buildfarm.metrics.aws.AwsMetricsPublisher;
 import build.buildfarm.metrics.gcp.GcpMetricsPublisher;
 import build.buildfarm.metrics.log.LogMetricsPublisher;
+import build.buildfarm.metrics.tracing.BuildFarmTracing;
+import build.buildfarm.metrics.tracing.honeycomb.HoneycombPublisher;
 import build.buildfarm.v1test.BuildFarmServerConfig;
 import build.buildfarm.v1test.MetricsConfig;
+import build.buildfarm.v1test.TracingConfig;
 import com.google.devtools.common.options.OptionsParser;
 import com.google.protobuf.TextFormat;
 import io.grpc.Server;
@@ -86,6 +89,8 @@ public class BuildFarmServer extends LoggingMain {
 
     ServerInterceptor headersInterceptor = new ServerHeadersInterceptor();
 
+    BuildFarmTracing buildFarmTracing = getBuildfarmTracer(config.getTracingConfig());
+
     server =
         serverBuilder
             .addService(healthStatusManager.getHealthService())
@@ -104,7 +109,8 @@ public class BuildFarmServer extends LoggingMain {
                     config.getExecuteKeepaliveAfterSeconds(),
                     TimeUnit.SECONDS,
                     keepaliveScheduler,
-                    getMetricsPublisher(config.getMetricsConfig())))
+                    getMetricsPublisher(config.getMetricsConfig()),
+                    buildFarmTracing))
             .addService(new OperationQueueService(instances))
             .addService(new OperationsService(instances))
             .addService(new AdminService(config.getAdminConfig(), instances))
@@ -134,6 +140,10 @@ public class BuildFarmServer extends LoggingMain {
       case "gcp":
         return new GcpMetricsPublisher(metricsConfig);
     }
+  }
+
+  private static BuildFarmTracing getBuildfarmTracer(TracingConfig tracingConfig) {
+    return new HoneycombPublisher(tracingConfig.getHoneycombConfig().getWriteKey(), tracingConfig.getHoneycombConfig().getDataset());
   }
 
   public void start(String publicName) throws IOException {

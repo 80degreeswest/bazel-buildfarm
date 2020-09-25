@@ -27,6 +27,7 @@ import build.buildfarm.common.Watcher;
 import build.buildfarm.common.grpc.TracingMetadataUtils;
 import build.buildfarm.instance.Instance;
 import build.buildfarm.metrics.MetricsPublisher;
+import build.buildfarm.metrics.tracing.BuildFarmTracing;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
@@ -49,18 +50,21 @@ public class ExecutionService extends ExecutionGrpc.ExecutionImplBase {
   private final TimeUnit keepaliveUnit;
   private final ScheduledExecutorService keepaliveScheduler;
   private final MetricsPublisher metricsPublisher;
+  private final BuildFarmTracing buildFarmTracing;
 
   public ExecutionService(
       Instances instances,
       long keepaliveAfter,
       TimeUnit keepaliveUnit,
       ScheduledExecutorService keepaliveScheduler,
-      MetricsPublisher metricsPublisher) {
+      MetricsPublisher metricsPublisher,
+      BuildFarmTracing buildFarmTracing) {
     this.instances = instances;
     this.keepaliveAfter = keepaliveAfter;
     this.keepaliveUnit = keepaliveUnit;
     this.keepaliveScheduler = keepaliveScheduler;
     this.metricsPublisher = metricsPublisher;
+    this.buildFarmTracing = buildFarmTracing;
   }
 
   private void withCancellation(
@@ -174,6 +178,7 @@ public class ExecutionService extends ExecutionGrpc.ExecutionImplBase {
   public void waitExecution(
       WaitExecutionRequest request, StreamObserver<Operation> responseObserver) {
     String operationName = request.getName();
+    buildFarmTracing.sendTrace("waitExecution", operationName);
     Instance instance;
     try {
       instance = instances.getFromOperationName(operationName);
@@ -193,6 +198,7 @@ public class ExecutionService extends ExecutionGrpc.ExecutionImplBase {
 
   @Override
   public void execute(ExecuteRequest request, StreamObserver<Operation> responseObserver) {
+    buildFarmTracing.sendTrace("execute", request.getActionDigest().getHash());
     Instance instance;
     try {
       instance = instances.get(request.getInstanceName());
