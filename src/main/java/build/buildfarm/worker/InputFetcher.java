@@ -17,6 +17,7 @@ package build.buildfarm.worker;
 import static build.bazel.remote.execution.v2.ExecutionStage.Value.QUEUED;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -233,7 +234,7 @@ public class InputFetcher implements Runnable {
         operationContext.queueEntry,
         QUEUED,
         () -> {},
-        Deadline.after(10, DAYS));
+        Deadline.after(1, HOURS));
 
     OperationContext fetchedOperationContext =
         operationContext

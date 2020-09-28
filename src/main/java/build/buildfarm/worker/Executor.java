@@ -18,6 +18,7 @@ import static build.buildfarm.v1test.ExecutionPolicy.PolicyCase.WRAPPER;
 import static com.google.common.collect.Maps.uniqueIndex;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 
 import build.bazel.remote.execution.v2.ActionResult;
@@ -142,7 +143,7 @@ class Executor {
 
     Deadline pollDeadline;
     if (timeout == null) {
-      pollDeadline = Deadline.after(10, DAYS);
+      pollDeadline = Deadline.after(1, HOURS);
     } else {
       pollDeadline =
           Deadline.after(
@@ -225,7 +226,7 @@ class Executor {
         operationContext.queueEntry,
         ExecutionStage.Value.EXECUTING,
         () -> {},
-        Deadline.after(10, DAYS));
+        Deadline.after(1, HOURS));
 
     resultBuilder
         .getExecutionMetadataBuilder()

@@ -21,6 +21,7 @@ import static build.buildfarm.common.Errors.VIOLATION_TYPE_INVALID;
 import static build.buildfarm.common.Errors.VIOLATION_TYPE_MISSING;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
 
 import build.bazel.remote.execution.v2.Action;
 import build.bazel.remote.execution.v2.ActionResult;
@@ -205,7 +206,7 @@ class ShardWorkerContext implements WorkerContext {
   @Override
   public Poller createPoller(String name, QueueEntry queueEntry, ExecutionStage.Value stage) {
     Poller poller = new Poller(operationPollPeriod);
-    resumePoller(poller, name, queueEntry, stage, () -> {}, Deadline.after(10, DAYS));
+    resumePoller(poller, name, queueEntry, stage, () -> {}, Deadline.after(1, HOURS));
     return poller;
   }
 

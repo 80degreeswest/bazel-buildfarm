@@ -25,6 +25,7 @@ import static com.google.common.util.concurrent.MoreExecutors.shutdownAndAwaitTe
 import static java.lang.String.format;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.logging.Level.SEVERE;
@@ -411,7 +412,7 @@ public class Worker extends LoggingMain {
           public Poller createPoller(
               String name, QueueEntry queueEntry, ExecutionStage.Value stage) {
             Poller poller = new Poller(config.getOperationPollPeriod());
-            resumePoller(poller, name, queueEntry, stage, () -> {}, Deadline.after(10, DAYS));
+            resumePoller(poller, name, queueEntry, stage, () -> {}, Deadline.after(1, HOURS));
             return poller;
           }
 
