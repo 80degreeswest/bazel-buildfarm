@@ -49,21 +49,19 @@ public class ByteStringWriteReader implements Runnable {
     write.getFuture().addListener(this::complete, directExecutor());
     // may want to buffer this if not ready
     try (OutputStream writeOut = write.getOutput(1, SECONDS, () -> {})) {
-      while (!isComplete() && (len = input.read(buffer)) != -1) {
-        if (len != 0) {
-          int dataLen = len;
-          int size = data.size();
-          if (size < dataLimit) {
-            if (size + dataLen > dataLimit) {
-              dataLen = dataLimit - size;
-            }
-            data.write(buffer, 0, len);
-            if (size + dataLen > dataLimit) {
-              new OutputStreamWriter(data).write("\nOutput truncated after exceeding limit.\n");
-            }
+      while (!isComplete() && (len = input.read(buffer)) > 0) {
+        int dataLen = len;
+        int size = data.size();
+        if (size < dataLimit) {
+          if (size + dataLen > dataLimit) {
+            dataLen = dataLimit - size;
           }
-          writeOut.write(buffer, 0, len);
+          data.write(buffer, 0, len);
+          if (size + dataLen > dataLimit) {
+            new OutputStreamWriter(data).write("\nOutput truncated after exceeding limit.\n");
+          }
         }
+        writeOut.write(buffer, 0, len);
       }
     } catch (IOException e) {
       // ignore asynchronous stream closure, this fulfills our objective
