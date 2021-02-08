@@ -227,6 +227,18 @@ java_library(
 )
 
 java_library(
+    name = "prometheus-metrics",
+    srcs = glob([
+        "metrics/prometheus/PrometheusPublisher.java",
+    ]),
+    deps = [
+        "@maven//:io_prometheus_simpleclient",
+        "@maven//:io_prometheus_simpleclient_hotspot",
+        "@maven//:io_prometheus_simpleclient_httpserver",
+    ],
+)
+
+java_library(
     name = "admin",
     srcs = glob([
         "admin/Admin.java",
@@ -394,6 +406,7 @@ java_library(
         ":common-grpc",
         ":common-redis",
         ":instance",
+        ":prometheus-metrics",
         ":server-instance",
         ":stub-instance",
         ":worker-queues",
@@ -464,6 +477,7 @@ java_library(
         ":log-metrics",
         ":memory-instance",
         ":metrics",
+        ":prometheus-metrics",
         ":shard-instance",
         "//src/main/protobuf:build_buildfarm_v1test_buildfarm_java_grpc",
         "//src/main/protobuf:build_buildfarm_v1test_buildfarm_java_proto",

@@ -39,6 +39,7 @@ import build.buildfarm.common.redis.RedisMap;
 import build.buildfarm.common.redis.RedisNodeHashes;
 import build.buildfarm.instance.Instance;
 import build.buildfarm.instance.shard.RedisShardSubscriber.TimedWatchFuture;
+import build.buildfarm.metrics.prometheus.PrometheusPublisher;
 import build.buildfarm.operations.FindOperationsResults;
 import build.buildfarm.operations.FindOperationsSettings;
 import build.buildfarm.operations.OperationsFinder;
@@ -1159,6 +1160,7 @@ public class RedisShardBackplane implements ShardBackplane {
             p.sync();
           });
     }
+    PrometheusPublisher.updateDispatchedOperationsSize(dispatchedOperations.size());
     return builder.build();
   }
 

@@ -209,6 +209,8 @@ message BuildFarmServerConfig {
   MetricsConfig metrics_config = 5;
 
   AdminConfig admin_config = 6;
+
+  PrometheusConfig prometheus_config = 7;
 }
 
 message MetricsConfig {
@@ -239,6 +241,10 @@ message GcpMetricsConfig {
 
 message LogMetricsConfig {
   string log_level = 1;
+}
+
+message PrometheusConfig {
+  int32 port = 1;
 }
 
 message AdminConfig {
