@@ -16,8 +16,6 @@ package build.buildfarm.instance.shard;
 
 import static com.google.common.base.Throwables.throwIfInstanceOf;
 import static com.google.common.base.Throwables.throwIfUnchecked;
-import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
-import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import build.bazel.remote.execution.v2.Digest;
@@ -87,17 +85,6 @@ class Writes {
         throwIfInstanceOf(e, IOException.class);
         throwIfUnchecked(e);
         throw new RuntimeException(e);
-      }
-    }
-
-    @Override
-    public ListenableFuture<FeedbackOutputStream> getOutputFuture(
-        long deadlineAfter, TimeUnit deadlineAfterUnits, Runnable onReadyHandler) {
-      // should be no reason to preserve exclusivity here
-      try {
-        return immediateFuture(getOutput(deadlineAfter, deadlineAfterUnits, onReadyHandler));
-      } catch (IOException e) {
-        return immediateFailedFuture(e);
       }
     }
 

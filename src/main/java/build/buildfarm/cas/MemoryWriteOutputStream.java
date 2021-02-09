@@ -14,8 +14,6 @@
 
 package build.buildfarm.cas;
 
-import static com.google.common.util.concurrent.Futures.immediateFuture;
-import static com.google.common.util.concurrent.Futures.transformAsync;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import build.bazel.remote.execution.v2.Digest;
@@ -36,7 +34,6 @@ class MemoryWriteOutputStream extends FeedbackOutputStream implements Write {
   private final ListenableFuture<ByteString> writtenFuture;
   private final ByteString.Output out;
   private final SettableFuture<Void> future = SettableFuture.create();
-  private SettableFuture<Void> closedFuture = null;
   private HashingOutputStream hashOut;
 
   MemoryWriteOutputStream(
@@ -75,22 +72,19 @@ class MemoryWriteOutputStream extends FeedbackOutputStream implements Write {
 
   @Override
   public void close() throws IOException {
-    if (getCommittedSize() >= digest.getSizeBytes()) {
-      hashOut.close();
-      closedFuture.set(null);
-      Digest actual = getActual();
-      if (!actual.equals(digest)) {
-        DigestMismatchException e = new DigestMismatchException(actual, digest);
-        future.setException(e);
-        throw e;
-      }
+    hashOut.close();
+    Digest actual = getActual();
+    if (!actual.equals(digest)) {
+      DigestMismatchException e = new DigestMismatchException(actual, digest);
+      future.setException(e);
+      throw e;
+    }
 
-      try {
-        storage.put(new ContentAddressableStorage.Blob(out.toByteString(), digest));
-      } catch (InterruptedException e) {
-        future.setException(e);
-        throw new IOException(e);
-      }
+    try {
+      storage.put(new ContentAddressableStorage.Blob(out.toByteString(), digest));
+    } catch (InterruptedException e) {
+      future.setException(e);
+      throw new IOException(e);
     }
   }
 
@@ -132,24 +126,9 @@ class MemoryWriteOutputStream extends FeedbackOutputStream implements Write {
   }
 
   @Override
-  public synchronized FeedbackOutputStream getOutput(
+  public FeedbackOutputStream getOutput(
       long deadlineAfter, TimeUnit deadlineAfterUnits, Runnable onReadyHandler) {
-    if (closedFuture == null || closedFuture.isDone()) {
-      closedFuture = SettableFuture.create();
-    }
     return this;
-  }
-
-  @Override
-  public synchronized ListenableFuture<FeedbackOutputStream> getOutputFuture(
-      long deadlineAfter, TimeUnit deadlineAfterUnits, Runnable onReadyHandler) {
-    if (closedFuture == null || closedFuture.isDone()) {
-      return immediateFuture(getOutput(deadlineAfter, deadlineAfterUnits, onReadyHandler));
-    }
-    return transformAsync(
-        closedFuture,
-        result -> getOutputFuture(deadlineAfter, deadlineAfterUnits, onReadyHandler),
-        directExecutor());
   }
 
   @Override
